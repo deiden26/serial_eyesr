@@ -50,7 +50,7 @@ class Author::Serializer < SerialEyesr::Serializer
   ]
   # Defaults to 20
   PAGE_SIZE = 25
-  # Defaults to true. Returns the Sorbet struct itself when false. Returns the
+  # Defaults to true. Returns Sorbet struct instances when false. Returns the
   # result of the `serialize` Sorbet struct method when true.
   TO_HASH = false
 
