@@ -1,8 +1,9 @@
 # SerialEyesr
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/serial_eyesr`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Serialeyesr is a serializing framework built to put
+typed, performative serialization on rails. Configure the serialized
+fields, types, default page size, related includes, and active record
+with a clear, declarative syntax that makes N+1 queries difficult to produce.
 
 ## Installation
 
@@ -22,7 +23,35 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Example
+
+```ruby
+class Author::Serializer < SerialEyesr::Serializer
+  class AuthorStruct < T::Struct
+    prop :id, Integer
+    prop :first_name, String
+    prop :last_name, String
+    prop :home_country, String
+    prop :publishers, T::Array[String]
+  end
+
+  STRUCT = AuthorStruct
+  PAGE_SIZE = 20
+  ACTIVE_RECORD = Author
+  INCLUDES = [
+    :address,
+    { books: :publisher },
+  ].freeze
+
+  def home_country(author)
+    author.address.country
+  end
+
+  def publishers(author)
+    author.books.map { |book| book.publisher.name }
+  end
+end
+```
 
 ## Development
 
@@ -32,7 +61,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/serial_eyesr.
+Bug reports and pull requests are welcome on GitHub at https://github.com/deiden26/serial_eyesr.
 
 ## License
 
