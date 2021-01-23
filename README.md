@@ -1,7 +1,8 @@
 # SerialEyesr
 
 Serialeyesr is a serializing framework built to put typed, performative
-serialization on Sorbet-coated Rails. Configure the serialized
+serialization on [Sorbet](https://sorbet.org/)-coated
+[Rails](https://rubyonrails.org/). Configure the serialized
 fields, types, default page size, related includes, and active record
 with a clear, declarative syntax that makes N+1 queries difficult to produce.
 
