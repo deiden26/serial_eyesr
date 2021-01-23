@@ -42,5 +42,8 @@ Layout/FirstArrayElementIndentation:
 Metrics/ClassLength:
   Enabled: false
 
-Layout/MultilineOperationIndentatio:
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
+Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented

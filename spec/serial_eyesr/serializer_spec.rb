@@ -84,7 +84,8 @@ RSpec.describe SerialEyesr::Serializer do
       'first_name' => author_to_serialize.first_name,
       'last_name' => author_to_serialize.last_name,
       'home_country' => author_to_serialize.address.country,
-      'publishers' => author_to_serialize.books.map { |book| book.publisher.name }
+      'publishers' => author_to_serialize
+        .books.map { |book| book.publisher.name },
     }
   end
 
@@ -178,9 +179,11 @@ RSpec.describe SerialEyesr::Serializer do
   end
 
   context 'when defaulted to TO_HASH == false' do
+    # rubocop:disable Lint/ConstantDefinitionInBlock
     class Author::StructSerializer < Author::Serializer
       TO_HASH = false
     end
+    # rubocop:enable Lint/ConstantDefinitionInBlock
 
     context 'when initialized with no arguments' do
       let(:author_serializer) { Author::StructSerializer.new }

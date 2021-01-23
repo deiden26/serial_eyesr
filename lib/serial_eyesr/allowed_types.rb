@@ -8,4 +8,3 @@ ALLOWED_TYPES = [
   T::Array,
   # TODO: T::Hash, other valid structs
 ].freeze
-

@@ -60,7 +60,9 @@ class SerialEyesr::Serializer
     validate_active_record
     validate_includes
 
+    # rubocop:disable Style/ColonMethodCall
     @active_record_relation = @active_record::const_get('ActiveRecord_Relation')
+    # rubocop:enable Style/ColonMethodCall
     @skip_includes = skip_includes
     @to_hash = if to_hash.nil?
                  self.class::TO_HASH
@@ -89,8 +91,8 @@ class SerialEyesr::Serializer
 
   def serialize_page(record, offset: 0, page_size: nil)
     unless record.instance_of?(@active_record_relation)
-      raise SerialEyesr::Error, "Can only serialize a query for #{@active_record} by "\
-        "the page. #{record} is not the correct type."
+      raise SerialEyesr::Error, 'Can only serialize a query for '\
+        "#{@active_record} by the page. #{record} is not the correct type."
     end
 
     page_size ||= @default_page_size
@@ -103,8 +105,8 @@ class SerialEyesr::Serializer
 
   def validate_struct
     unless @struct < T::Struct
-      raise SerialEyesr::Error, 'Provide a T::Struct subclass as the STRUCT for '\
-        "#{self.class}. Received #{@struct} instead."
+      raise SerialEyesr::Error, 'Provide a T::Struct subclass as the STRUCT '\
+        "for #{self.class}. Received #{@struct} instead."
     end
 
     @struct.props.each { |prop, config| validate_prop(prop, config) }
@@ -113,17 +115,15 @@ class SerialEyesr::Serializer
   def validate_prop(prop, config)
     invalid_type = nil
     if config[:array]
-      if !in_allowed_types?(config[:array])
-        invalid_type = config[:array]
-      end
+      invalid_type = config[:array] unless in_allowed_types?(config[:array])
     elsif !in_allowed_types?(config[:type])
       invalid_type = config[:type]
     end
 
-    if  invalid_type
-      raise Error, "The '#{prop}' prop in #{self.class} is an invalid "\
-        "type: #{invalid_type}"
-    end
+    return unless invalid_type
+
+    raise Error, "The '#{prop}' prop in #{self.class} is an invalid "\
+      "type: #{invalid_type}"
   end
 
   def in_allowed_types?(type)
@@ -175,7 +175,7 @@ class SerialEyesr::Serializer
 
   def construct_from_active_record(record)
     prop_values = {}
-    @struct.props.keys.each do |prop|
+    @struct.props.each_key do |prop|
       prop_values[prop] =
         if respond_to?(prop)
           send(prop, record)

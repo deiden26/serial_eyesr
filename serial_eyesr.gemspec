@@ -12,7 +12,8 @@ Gem::Specification.new do |spec|
   spec.description   = 'Serialeyesr is a serializing framework built to put '\
     'typed, performative serialization on rails. Configure the serialized '\
     'fields, types, default page size, related includes, and active record '\
-    'with a clear, declarative syntax that makes N+1 queries difficult to produce.'
+    'with a clear, declarative syntax that makes N+1 queries difficult to '\
+    'produce.'
   spec.homepage      = 'https://github.com/deiden26/serial_eyesr'
   spec.license       = 'MIT'
 
