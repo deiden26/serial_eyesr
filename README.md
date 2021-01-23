@@ -56,15 +56,22 @@ end
 ### Example Usage
 
 ```ruby
+# Serialize active record instances directly
 AuthorSerializer.new(Author.first).serialize
+# Serialize active record queries
 AuthorSerializer.new(Author.all).serialize
+# Serialize active record queries and skip the default includes
 AuthorSerializer.new(Author.all).serialize(skip_includes: true)
+# Serialize arrays of active record instances
 AuthorSerializer.new(Author.all.to_a).serialize
+# Serialize active record queries by the page using the default page size
 AuthorSerializer.new(Author.all).serialize_page
+# Serialize active record queries by the page with an offset
 AuthorSerializer.new(Author.all).serialize_page(offset: 20)
-AuthorSerializer.new(Author.all).serialize_page(offset: 20, page_size: 10)
-AuthorSerializer.new(Author.all)
-  .serialize_page(offset: 20, page_size: 10, skip_includes: true)
+# Serialize active record queries by the page and override the page size
+AuthorSerializer.new(Author.all).serialize_page(page_size: 10)
+# Serialize active record queries by the page and skip the default includes
+AuthorSerializer.new(Author.all).serialize_page(skip_includes: true)
 ```
 
 ## Development
