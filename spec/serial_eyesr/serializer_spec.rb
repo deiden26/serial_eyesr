@@ -2,7 +2,7 @@ require 'sorbet-runtime'
 
 require 'serial_eyesr/serializer'
 
-class AuthorStruct < T::Struct
+class Author::Struct < T::Struct
   include T::Struct::ActsAsComparable
 
   prop :id, Integer
@@ -13,7 +13,7 @@ class AuthorStruct < T::Struct
 end
 
 class Author::Serializer < SerialEyesr::Serializer
-  STRUCT = AuthorStruct
+  STRUCT = Author::Struct
   PAGE_SIZE = 20
   ACTIVE_RECORD = Author
   INCLUDES = [
@@ -38,6 +38,8 @@ RSpec.describe SerialEyesr::Serializer do
       address: author_address,
     )
   end
+
+  let(:author_query) { Author.where(id: author.id) }
 
   let!(:publisher) do
     Publisher.create!(
@@ -75,10 +77,6 @@ RSpec.describe SerialEyesr::Serializer do
     )
   end
 
-  it 'initializes' do
-    expect { Author::Serializer.new }.not_to raise_error
-  end
-
   def author_hash(author_to_serialize = nil)
     author_to_serialize ||= author
     {
@@ -91,38 +89,152 @@ RSpec.describe SerialEyesr::Serializer do
   end
 
   def author_struct(author_to_serialize = nil)
-    AuthorStruct.new(**author_hash(author_to_serialize)
+    Author::Struct.new(**author_hash(author_to_serialize)
       .transform_keys(&:to_sym))
   end
 
-  describe '#serialize' do
-    context 'when given an ActiveRecord instance' do
-      it 'serializes' do
-        serializer_result = Author::Serializer.new.serialize(author)
-        expect(serializer_result).to eq(author_hash)
+  context 'when initialized with no arguments' do
+    let(:author_serializer) { Author::Serializer.new }
+
+    describe '#serialize' do
+      context 'when given an ActiveRecord instance' do
+        it 'serializes to a hash' do
+          serializer_result = author_serializer.serialize(author)
+          expect(serializer_result).to eq(author_hash)
+        end
+      end
+
+      context 'when given an ActiveRecord_Relation instance' do
+        it 'serializes to an array of hashes' do
+          serializer_result = author_serializer.serialize(author_query)
+          expect(serializer_result).to contain_exactly(author_hash)
+        end
       end
     end
 
-    context 'when given an ActiveRecord_Relation instance' do
-      it 'serializes to hash' do
-        serializer_result = Author::Serializer.new.serialize(Author.all)
-        expect(serializer_result).to contain_exactly(author_hash)
+    describe '#serialize_page' do
+      context 'when given an ActiveRecord instance' do
+        it 'raises' do
+          expect { Author::Serializer.new.serialize_page(author) }
+            .to raise_error(SerialEyesr::Error)
+        end
       end
-    end
 
-    context 'when initialized with `to_hash` as `false`' do
-      it 'serializes ActiveRecord instances to structs' do
-        serializer_result = Author::Serializer.new(to_hash: false).serialize(author)
-        expect(serializer_result).to eq(author_struct)
+      context 'when given an ActiveRecord_Relation instance' do
+        it 'serializes to an array of hashes' do
+          serializer_result = author_serializer.serialize(author_query)
+          expect(serializer_result).to contain_exactly(author_hash)
+        end
+
+        it 'calls `#includes` on the provided ActiveRecord_Relation instance' do
+          expect(author_query)
+            .to receive(:includes).with(*Author::Serializer::INCLUDES)
+            .and_call_original
+          author_serializer.serialize(author_query)
+        end
       end
     end
   end
 
-  describe '#serialize_page' do
-    context 'when given an ActiveRecord instance' do
-      it 'raises' do
-        expect { Author::Serializer.new.serialize_page(author) }
-          .to raise_error(SerialEyesr::Error)
+  context 'when initialized with `skip_includes == true`' do
+    let(:author_serializer) { Author::Serializer.new(skip_includes: true) }
+
+    describe '#serialize_page' do
+      context 'when given an ActiveRecord_Relation instance' do
+        it 'serializes to an array of hashes' do
+          serializer_result = author_serializer.serialize(author_query)
+          expect(serializer_result).to contain_exactly(author_hash)
+        end
+
+        it 'does not call `#includes` on the provided ActiveRecord_Relation '\
+           'instance' do
+          expect(author_query)
+            .not_to receive(:includes).with(*Author::Serializer::INCLUDES)
+            .and_call_original
+          author_serializer.serialize(author_query)
+        end
+      end
+    end
+  end
+
+  context 'when initialized with `to_hash == false`' do
+    let(:author_serializer) { Author::Serializer.new(to_hash: false) }
+
+    describe '#serialize' do
+      context 'when given an ActiveRecord instance' do
+        it 'serializes to a struct' do
+          serializer_result = author_serializer.serialize(author)
+          expect(serializer_result).to eq(author_struct)
+        end
+      end
+
+      context 'when given an ActiveRecord_Relation instance' do
+        it 'serializes to an array of structs' do
+          serializer_result = author_serializer.serialize(author_query)
+          expect(serializer_result).to contain_exactly(author_struct)
+        end
+      end
+    end
+  end
+
+  context 'when defaulted to TO_HASH == false' do
+    class Author::StructSerializer < Author::Serializer
+      TO_HASH = false
+    end
+
+    context 'when initialized with no arguments' do
+      let(:author_serializer) { Author::StructSerializer.new }
+
+      describe '#serialize' do
+        context 'when given an ActiveRecord instance' do
+          it 'serializes to a struct' do
+            serializer_result = author_serializer.serialize(author)
+            expect(serializer_result).to eq(author_struct)
+          end
+        end
+
+        context 'when given an ActiveRecord_Relation instance' do
+          it 'serializes to an array of structs' do
+            serializer_result = author_serializer.serialize(author_query)
+            expect(serializer_result).to contain_exactly(author_struct)
+          end
+        end
+      end
+      describe '#serialize_page' do
+        context 'when given an ActiveRecord_Relation instance' do
+          it 'serializes to an array of structs' do
+            serializer_result = author_serializer.serialize(author_query)
+            expect(serializer_result).to contain_exactly(author_struct)
+          end
+        end
+      end
+    end
+
+    context 'when initialized with `to_hash == true`' do
+      let(:author_serializer) { Author::StructSerializer.new(to_hash: true) }
+
+      describe '#serialize' do
+        context 'when given an ActiveRecord instance' do
+          it 'serializes to a hash' do
+            serializer_result = author_serializer.serialize(author)
+            expect(serializer_result).to eq(author_hash)
+          end
+        end
+
+        context 'when given an ActiveRecord_Relation instance' do
+          it 'serializes to an array of hashes' do
+            serializer_result = author_serializer.serialize(author_query)
+            expect(serializer_result).to contain_exactly(author_hash)
+          end
+        end
+      end
+      describe '#serialize_page' do
+        context 'when given an ActiveRecord_Relation instance' do
+          it 'serializes to an array of hashes' do
+            serializer_result = author_serializer.serialize(author_query)
+            expect(serializer_result).to contain_exactly(author_hash)
+          end
+        end
       end
     end
   end
