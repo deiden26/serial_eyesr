@@ -88,7 +88,7 @@ Author::Serializer.new.serialize_page(Author.all)
 # Offset the query before paginating it
 Author::Serializer.new.serialize_page(Author.all, offset: 20)
 
-# Use a custom page size when pagenating
+# Use a custom page size when paginating
 Author::Serializer.new.serialize_page(Author.all, page_size: 10)
 ```
 
