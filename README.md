@@ -1,7 +1,7 @@
 # SerialEyesr
 
-Serialeyesr is a serializing framework built to put
-typed, performative serialization on rails. Configure the serialized
+Serialeyesr is a serializing framework built to put typed, performative
+serialization on Sorbet-coated Rails. Configure the serialized
 fields, types, default page size, related includes, and active record
 with a clear, declarative syntax that makes N+1 queries difficult to produce.
 
@@ -26,6 +26,8 @@ Or install it yourself as:
 ### Example Serializer
 
 ```ruby
+require 'sorbet-runtime'
+
 class Author::Serializer < SerialEyesr::Serializer
   # Sorbet structs can be defined in the class or externally
   class AuthorStruct < T::Struct
