@@ -35,27 +35,22 @@ require_relative 'allowed_types'
 #  end
 #
 # @example
-#  AuthorSerializer.new(Author.first).serialize
-#  AuthorSerializer.new(Author.all).serialize
-#  AuthorSerializer.new(Author.all).serialize(skip_includes: true)
-#  AuthorSerializer.new(Author.all.to_a).serialize
-#  AuthorSerializer.new(Author.all).serialize_page
-#  AuthorSerializer.new(Author.all).serialize_page(offset: 20)
-#  AuthorSerializer.new(Author.all).serialize_page(offset: 20, page_size: 10)
-#  AuthorSerializer.new(Author.all)
-#    .serialize_page(offset: 20, page_size: 10, skip_includes: true)
+#  AuthorSerializer.new.serialize(Author.first)
+#  AuthorSerializer.new.serialize(Author.all.to_a)
+#  AuthorSerializer.new.serialize(Author.all)
+#  AuthorSerializer.new(skip_includes: true).serialize(Author.all)
+#  AuthorSerializer.new.serialize_page(Author.all)
+#  AuthorSerializer.new.serialize_page(Author.all, offset: 20, page_size: 10)
 #
 class SerialEyesr::Serializer
   STRUCT = nil
-  PAGE_SIZE = nil
   ACTIVE_RECORD = nil
   INCLUDES = nil
+  PAGE_SIZE = nil
 
-  def initialize(record)
-    @record = record
+  def initialize(skip_includes: false)
     @struct = self.class::STRUCT
     @active_record = self.class::ACTIVE_RECORD
-    @default_page_size = self.class::PAGE_SIZE
     @includes = self.class::INCLUDES
 
     validate_struct
@@ -63,22 +58,37 @@ class SerialEyesr::Serializer
     validate_includes
 
     @active_record_relation = @active_record::const_get('ActiveRecord_Relation')
+    @skip_includes = skip_includes
+    @default_page_size = self.class::PAGE_SIZE
   end
 
-  def serialize(skip_includes: false)
-    serialize_record(@record, skip_includes)
+  def serialize(record)
+    case record
+    when @active_record
+      construct_from_active_record(record)
+    when Array
+      record.map do |record_instance|
+        construct_from_active_record(record_instance)
+      end
+    when @active_record_relation
+      construct_from_query(record)
+    else
+      raise Error, "Can only serialize a(n) #{@active_record}, an array of "\
+        "#{@active_record}s, or a query for #{@active_record}s. #{record} is "\
+        'not the correct type.'
+    end
   end
 
-  def serialize_page(page_size: nil, offset: 0, skip_includes: false)
-    unless @record.instance_of?(@active_record_relation)
+  def serialize_page(record, offset: 0, page_size: nil)
+    unless record.instance_of?(@active_record_relation)
       raise SerialEyesr::Error, "Can only serialize a query for #{@active_record} by "\
-        'the page.'
+        "the page. #{record} is not the correct type."
     end
 
     page_size ||= @default_page_size
 
-    query = @record.offset(offset).limit(page_size)
-    serialize_record(query, skip_includes)
+    query = record.offset(offset).limit(page_size)
+    serialize(query)
   end
 
   private
@@ -144,27 +154,11 @@ class SerialEyesr::Serializer
     end
   end
 
-  def serialize_record(record, skip_includes)
-    case record
-    when @active_record
-      construct_from_active_record(record)
-    when Array
-      record.each do |record_instance|
-        construct_from_active_record(record_instance)
-      end
-    when @active_record_relation
-      construct_from_query(skip_includes)
-    else
-      raise Error, "Can only serialize a(n) #{@active_record}, an array of "\
-        "#{@active_record}s, or a query for #{@active_record}s"
-    end
-  end
-
-  def construct_from_query(skip_includes)
-    query = if !skip_includes && @includes
-              @record.includes(*@includes)
+  def construct_from_query(query)
+    query = if !@skip_includes && @includes
+              query.includes(*@includes)
             else
-              @record
+              query
             end
     query.find_each.map do |record_instance|
       construct_from_active_record(record_instance)

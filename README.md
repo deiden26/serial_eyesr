@@ -57,21 +57,25 @@ end
 
 ```ruby
 # Serialize active record instances directly
-AuthorSerializer.new(Author.first).serialize
-# Serialize active record queries
-AuthorSerializer.new(Author.all).serialize
-# Serialize active record queries and skip the default includes
-AuthorSerializer.new(Author.all).serialize(skip_includes: true)
+AuthorSerializer.new.serialize(Author.first)
+
 # Serialize arrays of active record instances
 AuthorSerializer.new(Author.all.to_a).serialize
+
+# Serialize active record queries
+AuthorSerializer.new.serialize(Author.all)
+
+# Serialize active record queries and skip the default includes
+AuthorSerializer.new(skip_includes: true).serialize(Author.all)
+
 # Serialize active record queries by the page using the default page size
-AuthorSerializer.new(Author.all).serialize_page
+AuthorSerializer.new.serialize_page(Author.all)
+
 # Serialize active record queries by the page with an offset
-AuthorSerializer.new(Author.all).serialize_page(offset: 20)
+AuthorSerializer.new.serialize_page(Author.all, offset: 20)
+
 # Serialize active record queries by the page and override the page size
-AuthorSerializer.new(Author.all).serialize_page(page_size: 10)
-# Serialize active record queries by the page and skip the default includes
-AuthorSerializer.new(Author.all).serialize_page(skip_includes: true)
+AuthorSerializer.new.serialize_page(Author.all, page_size: 10)
 ```
 
 ## Development

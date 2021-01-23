@@ -74,7 +74,7 @@ RSpec.describe SerialEyesr::Serializer do
   end
 
   it 'initializes' do
-    expect { Author::Serializer.new(author) }.not_to raise_error
+    expect { Author::Serializer.new }.not_to raise_error
   end
 
   def serialized_author(author_to_serialize = nil)
@@ -91,15 +91,15 @@ RSpec.describe SerialEyesr::Serializer do
   describe '#serialize' do
     context 'when given an ActiveRecord instance' do
       it 'serializes' do
-        serializer = Author::Serializer.new(author)
-        expect(serializer.serialize).to eq(serialized_author)
+        serializer_result = Author::Serializer.new.serialize(author)
+        expect(serializer_result).to eq(serialized_author)
       end
     end
 
     context 'when given an ActiveRecord_Relation instance' do
       it 'serializes' do
-        serializer = Author::Serializer.new(Author.all)
-        expect(serializer.serialize).to contain_exactly(serialized_author)
+        serializer_result = Author::Serializer.new.serialize(Author.all)
+        expect(serializer_result).to contain_exactly(serialized_author)
       end
 
     end
@@ -108,8 +108,8 @@ RSpec.describe SerialEyesr::Serializer do
   describe '#serialize_page' do
     context 'when given an ActiveRecord instance' do
       it 'raises' do
-        serializer = Author::Serializer.new(author)
-        expect {serializer.serialize_page}.to raise_error(SerialEyesr::Error)
+        expect { Author::Serializer.new.serialize_page(author) }
+          .to raise_error(SerialEyesr::Error)
       end
     end
   end
