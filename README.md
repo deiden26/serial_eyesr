@@ -27,6 +27,7 @@ Or install it yourself as:
 
 ```ruby
 class Author::Serializer < SerialEyesr::Serializer
+  # Sorbet structs can be defined in the class or externally
   class AuthorStruct < T::Struct
     prop :id, Integer
     prop :first_name, String
@@ -35,14 +36,24 @@ class Author::Serializer < SerialEyesr::Serializer
     prop :publishers, T::Array[String]
   end
 
+  # Provide the typed struct to use as the field list for serialization
   STRUCT = AuthorStruct
-  PAGE_SIZE = 20
+  # Set the active record that will be serialized for validation purposes
   ACTIVE_RECORD = Author
+  # Optionally list related fields to include
   INCLUDES = [
     :address,
     { books: :publisher },
-  ].freeze
+  ]
+  # Defaults to 20
+  PAGE_SIZE = 25
+  # Defaults to true. Returns the Sorbet struct itself when false. Returns the
+  # result of the `serialize` Sorbet struct method when true.
+  TO_HASH = false
 
+  # When a method exists on the serializer matching a field name, it is used to
+  # serialize the field. Otherwise, the field name is sent to each active
+  # record instance.
   def home_country(author)
     author.address.country
   end
@@ -57,25 +68,28 @@ end
 
 ```ruby
 # Serialize active record instances directly
-AuthorSerializer.new.serialize(Author.first)
+Author::Serializer.new.serialize(Author.first)
 
 # Serialize arrays of active record instances
-AuthorSerializer.new(Author.all.to_a).serialize
+Author::Serializer.new.serialize(Author.all.to_a)
 
 # Serialize active record queries
-AuthorSerializer.new.serialize(Author.all)
+Author::Serializer.new.serialize(Author.all)
 
-# Serialize active record queries and skip the default includes
-AuthorSerializer.new(skip_includes: true).serialize(Author.all)
+# Force serialization to hashes (or to structs)
+Author::Serializer.new(to_hash: true).serialize(Author.all)
 
-# Serialize active record queries by the page using the default page size
-AuthorSerializer.new.serialize_page(Author.all)
+# Skip the default includes when serializing queries
+Author::Serializer.new(skip_includes: true).serialize(Author.all)
 
-# Serialize active record queries by the page with an offset
-AuthorSerializer.new.serialize_page(Author.all, offset: 20)
+# Paginate queries to a default page size
+Author::Serializer.new.serialize_page(Author.all)
 
-# Serialize active record queries by the page and override the page size
-AuthorSerializer.new.serialize_page(Author.all, page_size: 10)
+# Offset the query before paginating it
+Author::Serializer.new.serialize_page(Author.all, offset: 20)
+
+# Use a custom page ise when pagenating
+Author::Serializer.new.serialize_page(Author.all, page_size: 10)
 ```
 
 ## Development

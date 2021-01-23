@@ -8,7 +8,7 @@ require_relative 'allowed_types'
 # - Use inheritence to abstract boilerplate code and allow for customization
 #
 # @example
-#  class AuthorSerializer < SerialEyesr::Serializer
+#  class Author::Serializer < SerialEyesr::Serializer
 #    class AuthorStruct < T::Struct
 #      prop :id, Integer
 #      prop :first_name, String
@@ -20,10 +20,11 @@ require_relative 'allowed_types'
 #    STRUCT = AuthorStruct
 #    PAGE_SIZE = 20
 #    ACTIVE_RECORD = Author
+#    TO_HASH = false
 #    INCLUDES = [
 #      :address,
 #      { books: :publisher },
-#    ].freeze
+#    ]
 #
 #    def home_country(author)
 #      author.address.country
@@ -35,20 +36,22 @@ require_relative 'allowed_types'
 #  end
 #
 # @example
-#  AuthorSerializer.new.serialize(Author.first)
-#  AuthorSerializer.new.serialize(Author.all.to_a)
-#  AuthorSerializer.new.serialize(Author.all)
-#  AuthorSerializer.new(skip_includes: true).serialize(Author.all)
-#  AuthorSerializer.new.serialize_page(Author.all)
-#  AuthorSerializer.new.serialize_page(Author.all, offset: 20, page_size: 10)
+#  Author::Serializer.new.serialize(Author.first)
+#  Author::Serializer.new.serialize(Author.all.to_a)
+#  Author::Serializer.new.serialize(Author.all)
+#  Author::Serializer.new(skip_includes: true).serialize(Author.all)
+#  Author::Serializer.new(to_hash: true).serialize(Author.all)
+#  Author::Serializer.new.serialize_page(Author.all)
+#  Author::Serializer.new.serialize_page(Author.all, offset: 20, page_size: 10)
 #
 class SerialEyesr::Serializer
   STRUCT = nil
   ACTIVE_RECORD = nil
   INCLUDES = nil
-  PAGE_SIZE = nil
+  TO_HASH = true
+  PAGE_SIZE = 20
 
-  def initialize(skip_includes: false)
+  def initialize(skip_includes: false, to_hash: nil)
     @struct = self.class::STRUCT
     @active_record = self.class::ACTIVE_RECORD
     @includes = self.class::INCLUDES
@@ -59,6 +62,11 @@ class SerialEyesr::Serializer
 
     @active_record_relation = @active_record::const_get('ActiveRecord_Relation')
     @skip_includes = skip_includes
+    @to_hash = if to_hash.nil?
+                 self.class::TO_HASH
+               else
+                 to_hash
+               end
     @default_page_size = self.class::PAGE_SIZE
   end
 
@@ -175,6 +183,11 @@ class SerialEyesr::Serializer
           record.send(prop)
         end
     end
-    @struct.new(prop_values).serialize
+    struct_instance = @struct.new(prop_values)
+    if @to_hash
+      struct_instance.serialize
+    else
+      struct_instance
+    end
   end
 end

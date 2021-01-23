@@ -2,15 +2,17 @@ require 'sorbet-runtime'
 
 require 'serial_eyesr/serializer'
 
-class Author::Serializer < SerialEyesr::Serializer
-  class AuthorStruct < T::Struct
-    prop :id, Integer
-    prop :first_name, String
-    prop :last_name, String
-    prop :home_country, String
-    prop :publishers, T::Array[String]
-  end
+class AuthorStruct < T::Struct
+  include T::Struct::ActsAsComparable
 
+  prop :id, Integer
+  prop :first_name, String
+  prop :last_name, String
+  prop :home_country, String
+  prop :publishers, T::Array[String]
+end
+
+class Author::Serializer < SerialEyesr::Serializer
   STRUCT = AuthorStruct
   PAGE_SIZE = 20
   ACTIVE_RECORD = Author
@@ -77,7 +79,7 @@ RSpec.describe SerialEyesr::Serializer do
     expect { Author::Serializer.new }.not_to raise_error
   end
 
-  def serialized_author(author_to_serialize = nil)
+  def author_hash(author_to_serialize = nil)
     author_to_serialize ||= author
     {
       'id' => author_to_serialize.id,
@@ -88,20 +90,31 @@ RSpec.describe SerialEyesr::Serializer do
     }
   end
 
+  def author_struct(author_to_serialize = nil)
+    AuthorStruct.new(**author_hash(author_to_serialize)
+      .transform_keys(&:to_sym))
+  end
+
   describe '#serialize' do
     context 'when given an ActiveRecord instance' do
       it 'serializes' do
         serializer_result = Author::Serializer.new.serialize(author)
-        expect(serializer_result).to eq(serialized_author)
+        expect(serializer_result).to eq(author_hash)
       end
     end
 
     context 'when given an ActiveRecord_Relation instance' do
-      it 'serializes' do
+      it 'serializes to hash' do
         serializer_result = Author::Serializer.new.serialize(Author.all)
-        expect(serializer_result).to contain_exactly(serialized_author)
+        expect(serializer_result).to contain_exactly(author_hash)
       end
+    end
 
+    context 'when initialized with `to_hash` as `false`' do
+      it 'serializes ActiveRecord instances to structs' do
+        serializer_result = Author::Serializer.new(to_hash: false).serialize(author)
+        expect(serializer_result).to eq(author_struct)
+      end
     end
   end
 

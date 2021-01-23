@@ -1,6 +1,7 @@
 require 'bundler/setup'
 require 'byebug'
 require 'env'
+require 'sorbet-struct-comparable'
 
 require 'serial_eyesr'
 

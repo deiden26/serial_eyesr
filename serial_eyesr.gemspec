@@ -42,5 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '~> 0.92.0'
   spec.add_development_dependency 'sorbet', '~> 0.5.6155'
+  spec.add_development_dependency 'sorbet-struct-comparable', '~> 1.0.0'
   spec.add_development_dependency 'sqlite3', '~> 1.4.2'
 end

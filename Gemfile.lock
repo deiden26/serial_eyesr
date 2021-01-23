@@ -62,6 +62,8 @@ GEM
       sorbet-static (= 0.5.6229)
     sorbet-runtime (0.5.6229)
     sorbet-static (0.5.6229-universal-darwin-14)
+    sorbet-struct-comparable (1.0.0)
+      sorbet-runtime (>= 0.5)
     sqlite3 (1.4.2)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
@@ -79,6 +81,7 @@ DEPENDENCIES
   rubocop (~> 0.92.0)
   serial_eyesr!
   sorbet (~> 0.5.6155)
+  sorbet-struct-comparable (~> 1.0.0)
   sqlite3 (~> 1.4.2)
 
 BUNDLED WITH
