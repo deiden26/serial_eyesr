@@ -122,16 +122,63 @@ RSpec.describe SerialEyesr::Serializer do
       end
 
       context 'when given an ActiveRecord_Relation instance' do
+        def make_more_authors_than_page_size(page_size, amount_more: 1)
+          author_count = Author.count
+          while author_count < page_size + amount_more
+            Author.create!({
+              first_name: "#{author.first_name}-#{author_count}",
+              last_name: "#{author.last_name}-#{author_count}",
+              address_id: author.address_id,
+            })
+            author_count += 1
+          end
+        end
+
         it 'serializes to an array of hashes' do
-          serializer_result = author_serializer.serialize(author_query)
+          serializer_result = author_serializer.serialize_page(author_query)
           expect(serializer_result).to contain_exactly(author_hash)
+        end
+
+        it 'serializes the default PAGE_SIZE of hashes' do
+          make_more_authors_than_page_size(Author::Serializer::PAGE_SIZE)
+
+          serializer_result = author_serializer.serialize_page(Author.all)
+          expected_result = Author.limit(Author::Serializer::PAGE_SIZE)
+            .map { |author| author_hash(author) }
+          expect(serializer_result).to match_array(expected_result)
+        end
+
+        it 'serializes the provided page_size of hashes' do
+          page_size = Author::Serializer::PAGE_SIZE + 1
+          make_more_authors_than_page_size(page_size)
+
+          serializer_result = author_serializer
+            .serialize_page(Author.all, page_size: page_size)
+          expected_result = Author.limit(page_size)
+            .map { |author| author_hash(author) }
+          expect(serializer_result).to match_array(expected_result)
+        end
+
+        it 'serializes hashes after the given offset' do
+          offset = 10
+          make_more_authors_than_page_size(
+            Author::Serializer::PAGE_SIZE, amount_more: offset
+          )
+
+          serializer_result = author_serializer
+            .serialize_page(Author.all, offset: offset)
+          expected_result = Author
+            .offset(offset)
+            .limit(Author::Serializer::PAGE_SIZE)
+            .map { |author| author_hash(author) }
+          expect(serializer_result).to match_array(expected_result)
         end
 
         it 'calls `#includes` on the provided ActiveRecord_Relation instance' do
           expect(author_query)
             .to receive(:includes).with(*Author::Serializer::INCLUDES)
             .and_call_original
-          author_serializer.serialize(author_query)
+          author_serializer.serialize_page(author_query)
         end
       end
     end
@@ -143,7 +190,7 @@ RSpec.describe SerialEyesr::Serializer do
     describe '#serialize_page' do
       context 'when given an ActiveRecord_Relation instance' do
         it 'serializes to an array of hashes' do
-          serializer_result = author_serializer.serialize(author_query)
+          serializer_result = author_serializer.serialize_page(author_query)
           expect(serializer_result).to contain_exactly(author_hash)
         end
 
@@ -152,7 +199,7 @@ RSpec.describe SerialEyesr::Serializer do
           expect(author_query)
             .not_to receive(:includes).with(*Author::Serializer::INCLUDES)
             .and_call_original
-          author_serializer.serialize(author_query)
+          author_serializer.serialize_page(author_query)
         end
       end
     end
@@ -206,7 +253,7 @@ RSpec.describe SerialEyesr::Serializer do
       describe '#serialize_page' do
         context 'when given an ActiveRecord_Relation instance' do
           it 'serializes to an array of structs' do
-            serializer_result = author_serializer.serialize(author_query)
+            serializer_result = author_serializer.serialize_page(author_query)
             expect(serializer_result).to contain_exactly(author_struct)
           end
         end
@@ -234,7 +281,7 @@ RSpec.describe SerialEyesr::Serializer do
       describe '#serialize_page' do
         context 'when given an ActiveRecord_Relation instance' do
           it 'serializes to an array of hashes' do
-            serializer_result = author_serializer.serialize(author_query)
+            serializer_result = author_serializer.serialize_page(author_query)
             expect(serializer_result).to contain_exactly(author_hash)
           end
         end
