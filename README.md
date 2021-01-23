@@ -23,7 +23,7 @@ Or install it yourself as:
 
 ## Usage
 
-### Example
+### Example Serializer
 
 ```ruby
 class Author::Serializer < SerialEyesr::Serializer
@@ -51,6 +51,20 @@ class Author::Serializer < SerialEyesr::Serializer
     author.books.map { |book| book.publisher.name }
   end
 end
+```
+
+### Example Usage
+
+```ruby
+AuthorSerializer.new(Author.first).serialize
+AuthorSerializer.new(Author.all).serialize
+AuthorSerializer.new(Author.all).serialize(skip_includes: true)
+AuthorSerializer.new(Author.all.to_a).serialize
+AuthorSerializer.new(Author.all).serialize_page
+AuthorSerializer.new(Author.all).serialize_page(offset: 20)
+AuthorSerializer.new(Author.all).serialize_page(offset: 20, page_size: 10)
+AuthorSerializer.new(Author.all)
+  .serialize_page(offset: 20, page_size: 10, skip_includes: true)
 ```
 
 ## Development
